@@ -1,15 +1,15 @@
 import requests
-from decord import VideoReader, cpu
+
 import torch
+
+from torch.multiprocessing import Process, Queue, Manager
+from transformers import TextStreamer
+
 from flash_vstream.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN
 from flash_vstream.conversation import conv_templates, SeparatorStyle
 from flash_vstream.model.builder import load_pretrained_model
 from flash_vstream.utils import disable_torch_init
 from flash_vstream.mm_utils import tokenizer_image_token, get_model_name_from_path, KeywordsStoppingCriteria
-
-from torch.multiprocessing import Process, Queue, Manager
-from transformers import TextStreamer
-
 from model.modelclass import Model
 class FlashVstream(Model):
     def __init__(self):
@@ -23,13 +23,14 @@ class FlashVstream(Model):
 
 def FlashVstream_Init():
     global tokenizer, model, image_processor, context_len
-    model_path = "IVGSZ/Flash-VStream-7b"
+    model_path = "/media/drive_16TB/hexu/flash_vstream/Flash-VStream-7b"
     model_name = get_model_name_from_path(model_path)
     model_base = None
     tokenizer, model, image_processor, context_len = load_pretrained_model(model_path, model_base, model_name, device="cuda", device_map="auto")
     print("Model initialized.")
 
 def load_video(video_path):
+    from decord import VideoReader, cpu
     vr = VideoReader(video_path)
     total_frame_num = len(vr)
     fps = round(vr.get_avg_fps())
@@ -42,7 +43,7 @@ def FlashVstream_Run(file, inp):
     video = load_video(file)
     video = image_processor.preprocess(video, return_tensors='pt')['pixel_values'].half().cuda()
     video = [video]
-
+    print(f"Video loaded with shape: {video[0].shape}")
     qs = inp
     if model.config.mm_use_im_start_end:
         qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
@@ -53,6 +54,7 @@ def FlashVstream_Run(file, inp):
     conv.append_message(conv.roles[0], inp)
     conv.append_message(conv.roles[1], None)
     prompt = conv.get_prompt()
+
 
     input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
 
@@ -78,5 +80,5 @@ def FlashVstream_Run(file, inp):
         outputs = outputs[:-len(stop_str)]
     outputs = outputs.strip()
 
-    print(outputs)
+    print("[Model Response]",outputs)
     return outputs

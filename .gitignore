@@ -1,3 +1,17 @@
 .DS_Store
+# IDE
+.vscode/
+*.ipynb_checkpoints/
 
+# 数据与中间产物
+data/
+src/data/videos/
+src/data/*_output_*.json
+src/data/sqa_output_*.json
+
+# 本地工具/二进制
+ffmpeg/
+*.mp4
+*.mov
+*.avi
 __pycache__/

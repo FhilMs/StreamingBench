@@ -2,7 +2,7 @@ cd ../src
 
 # Change the model name to the model you want to evaluate
 
-EVAL_MODEL="MiniCPM-V"
+EVAL_MODEL="FlashVstream"
 Devices=0
 
 # -1 means all context, i. e. (0, query_time); any integer t greater than 0 means (query_time - t, query_time)
@@ -43,6 +43,12 @@ if [ "$EVAL_MODEL" = "MiniCPM-V" ]; then
     conda activate MiniCPM-V
     CUDA_VISIBLE_DEVICES=$Devices python eval.py --model_name $EVAL_MODEL --benchmark_name $BENCHMARK --data_file $DATA_FILE --output_file $OUTPUT_FILE --context_time $CONTEXT_TIME
 fi
+
+if [ "$EVAL_MODEL" = "FlashVstream" ]; then
+
+    CUDA_VISIBLE_DEVICES=$Devices python eval.py --model_name $EVAL_MODEL --benchmark_name $BENCHMARK --data_file $DATA_FILE --output_file $OUTPUT_FILE --context_time $CONTEXT_TIME
+fi
+
 # For proactive output(Offline + Text Instruction)
 
 TASK="proactive"
@@ -55,15 +61,20 @@ if [ "$EVAL_MODEL" = "MiniCPM-V" ]; then
     CUDA_VISIBLE_DEVICES=$Devices python eval.py --model_name $EVAL_MODEL --benchmark_name $BENCHMARK --data_file $DATA_FILE --output_file $OUTPUT_FILE --context_time $CONTEXT_TIME
 fi
 
+
 # (Streaming/Online + Text Instruction)
 # Optional Task(real, omni, sqa)
 
-TASK="real"
+TASK="sqa"
 DATA_FILE="./data/questions_${TASK}_stream.json"
 OUTPUT_FILE="./data/${TASK}_text_stream_output_${EVAL_MODEL}.json"
 BENCHMARK="StreamingOpenStreamText"
 
 if [ "$EVAL_MODEL" = "MiniCPM-V" ]; then
     conda activate MiniCPM-V
+    CUDA_VISIBLE_DEVICES=$Devices python eval.py --model_name $EVAL_MODEL --benchmark_name $BENCHMARK --data_file $DATA_FILE --output_file $OUTPUT_FILE --context_time $CONTEXT_TIME
+fi
+
+if [ "$EVAL_MODEL" = "FlashVstream" ]; then
     CUDA_VISIBLE_DEVICES=$Devices python eval.py --model_name $EVAL_MODEL --benchmark_name $BENCHMARK --data_file $DATA_FILE --output_file $OUTPUT_FILE --context_time $CONTEXT_TIME
 fi
